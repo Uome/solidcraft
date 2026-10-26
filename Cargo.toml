@@ -79,6 +79,9 @@ cadmpeg-core = "=0.6.3"
 cadmpeg-ir = "=0.6.3"
 cadmpeg-registry = { version = "=0.6.3", default-features = false, features = ["fcstd", "rhino", "step"] }
 
+# OpenXR runtime bindings (MIT OR Apache-2.0, Rust wrapper around the C Khronos loader)
+openxr = { version = "0.22", default-features = false, features = ["static", "linked"] }
+
 # fonts (sketch text outlines; MIT OR Apache-2.0, pure Rust)
 ttf-parser = { version = "0.25", default-features = false, features = ["std"] }
 
