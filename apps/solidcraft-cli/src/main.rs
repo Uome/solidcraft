@@ -25,9 +25,6 @@
 //! --debug (with any command)                                  SolidCraft's debug log on stderr (or RUST_LOG=LEVEL)
 //! ```
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
-// `deny`, not `forbid`: `xr_info::load_entry` needs one targeted `allow(unsafe_code)` to open the
-// OpenXR loader the runtime installs, and `forbid` cannot be relaxed anywhere in the crate. The
-// app crate (`apps/solidcraft`) has the same shape for the macOS open-document handler.
 #![deny(unsafe_code)]
 
 mod bench_agent;
