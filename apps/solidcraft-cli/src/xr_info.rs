@@ -196,9 +196,25 @@ fn probe() -> Value {
                 "max_sample_count": view.max_swapchain_sample_count,
             }));
         }
+        // How the runtime can combine the pictures with the room: opaque (VR), or additive and
+        // alpha blend (see-through and passthrough headsets). The first one is the runtime's preference.
+        let blend_modes: Vec<Value> = instance
+            .enumerate_environment_blend_modes(system, *vc)
+            .unwrap_or_default()
+            .iter()
+            .map(|m| {
+                json!(match *m {
+                    openxr::EnvironmentBlendMode::OPAQUE => "opaque",
+                    openxr::EnvironmentBlendMode::ADDITIVE => "additive",
+                    openxr::EnvironmentBlendMode::ALPHA_BLEND => "alpha_blend",
+                    _ => "unknown",
+                })
+            })
+            .collect();
         vc_list.push(json!({
             "type": config_name,
             "views": views,
+            "environment_blend_modes": blend_modes,
         }));
     }
     report["openxr"]["view_configurations"] = Value::Array(vc_list);
@@ -262,6 +278,9 @@ fn summary(report: &Value) -> String {
     if let Some((w, h)) = stereo_eye_size(report) {
         out.push_str(&format!("Eye resolution ..... {w} x {h} per eye\n"));
     }
+    if let Some(modes) = stereo_blend_modes(report) {
+        out.push_str(&format!("Blend modes ........ {modes}\n"));
+    }
     let vulkan = report["openxr"]["graphics"]["vulkan_supported"].as_bool();
     if let Some(v) = vulkan {
         let word = if v { "yes" } else { "no" };
@@ -296,6 +315,14 @@ fn stereo_eye_size(report: &Value) -> Option<(u64, u64)> {
         report["openxr"]["view_configurations"].as_array()?.iter().find(|c| c.get("type").and_then(Value::as_str) == Some("primary_stereo"))?;
     let view = stereo.get("views")?.as_array()?.first()?;
     Some((view.get("recommended_width")?.as_u64()?, view.get("recommended_height")?.as_u64()?))
+}
+
+/// The environment blend modes of the primary stereo view configuration, the runtime's preference first.
+fn stereo_blend_modes(report: &Value) -> Option<String> {
+    let stereo =
+        report["openxr"]["view_configurations"].as_array()?.iter().find(|c| c.get("type").and_then(Value::as_str) == Some("primary_stereo"))?;
+    let modes: Vec<&str> = stereo.get("environment_blend_modes")?.as_array()?.iter().filter_map(Value::as_str).collect();
+    if modes.is_empty() { None } else { Some(modes.join(", ")) }
 }
 
 /// Walk a path of object keys, returning the string at the end of it.
